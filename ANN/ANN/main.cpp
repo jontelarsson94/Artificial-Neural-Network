@@ -22,7 +22,7 @@ float hiddenOutputs[3];
 float weight[3][3];
 float expectedOutput[2200];
 
-const float learningRate = 0.35;
+const float learningRate = 0.2;
 
 void readData(string fileName)
 {
@@ -97,17 +97,14 @@ float sigmoid(float net)
 
 float calculateOutputError(float output, int pos)
 {
-    return (expectedOutput[pos] - output) * output * (1 - output);
+    return (1 - output) * output * (expectedOutput[pos] - output);
 }
 
 void setInputWeights(int pos, int weightPos, float error)
 {
-    float weightOne = learningRate*error*input[pos][0];
-    float weightTwo = learningRate*error*input[pos][0];
-    float weightThree = learningRate*error*input[pos][0];
-    weight[weightPos][0] += weightOne;
-    weight[weightPos][1] += weightTwo;
-    weight[weightPos][2] += weightThree;
+    weight[weightPos][0] = learningRate*error*input[pos][0];
+    weight[weightPos][1] = learningRate*error*input[pos][1];
+    weight[weightPos][2] = learningRate*error*input[pos][2];
 }
 
 void setHiddenValue(float output, int j)
@@ -137,7 +134,7 @@ int main(int argc, const char * argv[]) {
     float net, output, lastError = 1.0;
     int count;
     int correct = 0;
-    while(correct < 543) {
+    while(correct < 500) {
         for(int i = 0; i < 1500; i++) {
             count = 0;
             error = numeric_limits<float>::max();
@@ -163,11 +160,10 @@ int main(int argc, const char * argv[]) {
                 setInputWeights(i, j, hiddenError);
             }
             error = error/4;
-            count++;
-            if(fabs(abs(lastError)-abs(error)) >= 0.000001)
-                count = 0;
-            //cout << abs(error) << "\t" << abs(lastError) << "\t" << count << "\t" << i << endl;
+            //cout << error << endl;
         }
+        
+        
         correct = 0;
         int uncorrect = 0;
         int over = 0;
