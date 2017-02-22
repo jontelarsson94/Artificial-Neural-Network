@@ -22,7 +22,7 @@ float hiddenOutputs[3];
 float weight[3][3];
 float expectedOutput[2200];
 
-const float learningRate = 0.2;
+const float learningRate = 0.35;
 
 void readData(string fileName)
 {
@@ -181,6 +181,7 @@ int main(int argc, const char * argv[]) {
         }
         net = calculateHiddenNet(i);
         output = sigmoid(net);
+        cout << output << endl;
         
         if(expectedOutput[i] == 1.0){
             if(output >= 0.5)
