@@ -136,68 +136,70 @@ int main(int argc, const char * argv[]) {
     float error = 0.0;
     float net, output, lastError = 1.0;
     int count;
-    
+    int correct = 0;
+    while(correct < 543) {
         for(int i = 0; i < 1500; i++) {
             count = 0;
             error = numeric_limits<float>::max();
-            while(count < 1000) {
-                lastError = error;
-                error = 0.0;
-                for(int j = 0; j < 3; j++) {
-                    net = calculateNet(i, j);
-                    output = sigmoid(net);
-                    setHiddenValue(output, j);
-                }
-                net = calculateHiddenNet(i);
+            lastError = error;
+            error = 0.0;
+            for(int j = 0; j < 3; j++) {
+                net = calculateNet(i, j);
                 output = sigmoid(net);
+                setHiddenValue(output, j);
+            }
+            net = calculateHiddenNet(i);
+            output = sigmoid(net);
             
-                float outputError = calculateOutputError(output, i);
-                error += outputError;
+            float outputError = calculateOutputError(output, i);
+            error += outputError;
             
-                setHiddenWeights(outputError);
+            setHiddenWeights(outputError);
             
-                for(int j = 0; j < 3; j++) {
-                    float hiddenError = calculateHiddenError(j, outputError);
-                    error += hiddenError;
+            for(int j = 0; j < 3; j++) {
+                float hiddenError = calculateHiddenError(j, outputError);
+                error += hiddenError;
                 
-                    setInputWeights(i, j, hiddenError);
-                }
-                error = error/4;
-                count++;
-                if(fabs(abs(lastError)-abs(error)) >= 0.000001)
-                    count = 0;
-                //cout << abs(error) << "\t" << abs(lastError) << "\t" << count << "\t" << i << endl;
+                setInputWeights(i, j, hiddenError);
+            }
+            error = error/4;
+            count++;
+            if(fabs(abs(lastError)-abs(error)) >= 0.000001)
+                count = 0;
+            //cout << abs(error) << "\t" << abs(lastError) << "\t" << count << "\t" << i << endl;
+        }
+        correct = 0;
+        int uncorrect = 0;
+        int over = 0;
+        
+        for(int i = 1500; i < 2200; i++) {
+            for(int j = 0; j < 3; j++) {
+                net = calculateNet(i, j);
+                output = sigmoid(net);
+                setHiddenValue(output, j);
+            }
+            net = calculateHiddenNet(i);
+            output = sigmoid(net);
+            if(output == 0.5)
+                over++;
+            //cout << output << endl;
+            
+            if(expectedOutput[i] == 1.0){
+                if(output >= 0.5)
+                    correct++;
+                else
+                    uncorrect++;
+            } else {
+                if(output < 0.5)
+                    correct++;
+                else
+                    uncorrect++;
             }
         }
-    
-    int correct = 0;
-    int uncorrect = 0;
-    
-    for(int i = 1500; i < 2200; i++) {
-        for(int j = 0; j < 3; j++) {
-            net = calculateNet(i, j);
-            output = sigmoid(net);
-            setHiddenValue(output, j);
-        }
-        net = calculateHiddenNet(i);
-        output = sigmoid(net);
-        cout << output << endl;
         
-        if(expectedOutput[i] == 1.0){
-            if(output >= 0.5)
-                correct++;
-            else
-                uncorrect++;
-        } else {
-            if(output < 0.5)
-                correct++;
-            else
-                uncorrect++;
-        }
+        cout << "Correct: " << correct << endl;
+        cout << "Uncorrect: " << uncorrect << endl;
     }
-    
-    cout << "Correct: " << correct << endl;
-    cout << "Uncorrect: " << uncorrect << endl;
     
     
     
