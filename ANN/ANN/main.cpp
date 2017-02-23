@@ -22,6 +22,8 @@ float weightsToHidden[3][3];
 float hiddenOutputs[3];
 float weightsToOutput[3];
 float expectedOutput[2200];
+float biasWeightToHidden[3];
+float biasWeightToOutput;
 
 const float learningRate = 0.1;
 
@@ -67,6 +69,10 @@ void initializeWeights()
     weightsToOutput[0] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
     weightsToOutput[1] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
     weightsToOutput[2] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+    biasWeightToHidden[0] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+    biasWeightToHidden[1] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+    biasWeightToHidden[2] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+    biasWeightToOutput = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
 float sigmoid(float net)
@@ -76,12 +82,12 @@ float sigmoid(float net)
 
 float calculateHiddenNet(int i, int j)
 {
-    return (input[i][0] * weightsToHidden[0][j]) + (input[i][1] * weightsToHidden[1][j]) + (input[i][2] * weightsToHidden[2][j]);
+    return (input[i][0] * weightsToHidden[0][j]) + (input[i][1] * weightsToHidden[1][j]) + (input[i][2] * weightsToHidden[2][j]) + (biasWeightToHidden[j]);
 }
 
 float calculateOutputNet()
 {
-    return (hiddenOutputs[0] * weightsToOutput[0]) + (hiddenOutputs[1] * weightsToOutput[1]) + (hiddenOutputs[2] * weightsToOutput[2]);
+    return (hiddenOutputs[0] * weightsToOutput[0]) + (hiddenOutputs[1] * weightsToOutput[1]) + (hiddenOutputs[2] * weightsToOutput[2]) + (biasWeightToOutput);
 }
 
 float calculateOutputError(int i, float output)
@@ -94,6 +100,11 @@ float calculateWeightToOutput(int j, float outputError)
     return learningRate * outputError * hiddenOutputs[j];
 }
 
+float calculateBiasWeightToOutput(float outputError)
+{
+    return learningRate * outputError * 1;
+}
+
 float calculateHiddenError(int j, float outputError)
 {
     return hiddenOutputs[j] * (1 - hiddenOutputs[j]) * weightsToOutput[j] * outputError;
@@ -104,6 +115,11 @@ float calculateWeightToHidden(int i, int k, float hiddenError)
     return learningRate * hiddenError * input[i][k];
 }
 
+float calculateBiasWeightToHidden(float hiddenError)
+{
+    return learningRate * hiddenError * 1;
+}
+
 int main(int argc, const char * argv[]) {
     
     srand(NULL);
@@ -112,9 +128,12 @@ int main(int argc, const char * argv[]) {
     float net, output, outputError;
     float hiddenError[3];
     float worstOutput = 5.0;
-    while(abs(worstOutput) > 0.000001){
-        cout << worstOutput << endl;
-        worstOutput = 0.0;
+    float totalError = 1505.0;
+    while(1){
+        if(totalError/1500 < 0.035570)
+            break;
+        
+        totalError = 0.0;
         for(int i = 0; i < 1500; i++) {
             outputError = 5.0;
             //Calculate output at hidden layer
@@ -130,8 +149,7 @@ int main(int argc, const char * argv[]) {
             //calculate error at output layer
             outputError = calculateOutputError(i, output);
             
-            if(outputError > worstOutput)
-                worstOutput = outputError;
+            totalError += abs(outputError);
             
             
             //calculate error at hidden layer
@@ -144,6 +162,9 @@ int main(int argc, const char * argv[]) {
             for(int j = 0; j < 3; j++) {
                 weightsToOutput[j] += calculateWeightToOutput(j, outputError);
             }
+            
+            //Setting new bias weight
+            biasWeightToOutput += calculateBiasWeightToOutput(outputError);
                     
             //calculate new weights for paths from input to hidden
             //Better if accumulating than just setting
@@ -151,6 +172,8 @@ int main(int argc, const char * argv[]) {
                 for(int k = 0; k < 3; k++) {
                     weightsToHidden[k][j] += calculateWeightToHidden(i, k, hiddenError[j]);
                 }
+                //Setting new bias weight
+                biasWeightToHidden[j] += calculateBiasWeightToHidden(hiddenError[j]);
             }
         }
     }
@@ -158,7 +181,7 @@ int main(int argc, const char * argv[]) {
     int correct = 0;
     int uncorrect = 0;
     
-    for(int i = 1500; i < 2200; i++) {
+    for(int i = 0; i < 2200; i++) {
         for(int j = 0; j < 3; j++) {
             net = calculateHiddenNet(i, j);
             hiddenOutputs[j] = sigmoid(net);
@@ -167,6 +190,7 @@ int main(int argc, const char * argv[]) {
         //Calculate output at output layer
         net = calculateOutputNet();
         output = sigmoid(net);
+        cout << output << endl;
         
         if(expectedOutput[i] == 1.0 && output >= 0.5)
             correct++;
